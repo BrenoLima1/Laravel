@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Add task')
+@section('title', 'Edit task')
 
 @section('styles')
 <style>
@@ -12,31 +12,32 @@
 @endsection
 
 @section('content')
-    <form action="{{ route('tasks.store') }}" method="post">
+    <form action="{{ route('tasks.update', ['id' => $task->id]) }}" method="post">
         @csrf
+        @method('PUT')
         <div>
             <label for="title">Title</label>
-            <input type="text" name="title" id="title" value="{{ old('title') }}">
+            <input type="text" name="title" id="title" value="{{ $task->title }}">
             @error('title')
                 <p class="error-message">{{ $message }}</p>
             @enderror
         </div>
         <div>
             <label for="description">Description</label>
-            <textarea name="description" id="description">{{ old('description') }}</textarea>
+            <textarea name="description" id="description">{{ $task->description }}</textarea>
             @error('description')
                 <p class="error-message">{{ $message }}</p>
             @enderror
         </div>
         <div>
             <label for="long_description">Long Description</label>
-            <textarea name="long_description" id="long_description">{{ old('long_description') }}</textarea>
+            <textarea name="long_description" id="long_description">{{ $task->long_description }}</textarea>
             @error('long_description')
                 <p class="error-message">{{ $message }}</p>
             @enderror
         </div>
         <div>
-            <button type="submit">Add Task</button>
+            <button type="submit">Edit Task</button>
         </div>
     </form>
 @endsection

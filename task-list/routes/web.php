@@ -1,68 +1,64 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Models\Task;
+use App\Http\Requests\TaskRequest;
 
+// Rota inicial redireciona para a lista de tasks
 Route::get('/', function () {
     return redirect()->route('tasks.index');
 });
 
+// Listagem de tasks
 Route::get('/tasks', function () {
-    $tasks = Task::all(); // busca do banco
+    $tasks = Task::latest()->paginate(5);
     return view('index', ['tasks' => $tasks]);
 })->name('tasks.index');
 
-Route::view('/tasks/create', 'create')->name('tasks.create');
+// Formulário de criação
+Route::get('/tasks/create', function () {
+    return view('create');
+})->name('tasks.create');
 
-Route::get('/tasks/{id}', function ($id) {
-    return view('show', ['task' => Task::findOrFail($id)]);
+// Exibir uma task específica
+Route::get('/tasks/{task}', function (Task $task) {
+    return view('show', ['task' => $task]);
 })->name('tasks.show');
 
-Route::post('/tasks', function (Request $request) {
-    $data = $request->validate([
-        'title' => 'required|max:255',
-        'description' => 'required',
-        'long_description' => 'nullable',
-    ]);
-
-    $task = new Task($data);
-    $task->completed = false;
-    $task->save();
-
-    return redirect()->route('tasks.show', ['id' => $task->id])
-    ->with('success', 'Task created successfully!');
-})->name('tasks.store');
-
-Route::get('tasks/{id}/edit', function ($id) {
-    return view('edit', ['task' => Task::findOrFail($id)]);
+// Formulário de edição
+Route::get('/tasks/{task}/edit', function (Task $task) {
+    return view('edit', ['task' => $task]);
 })->name('tasks.edit');
 
-Route::put('/tasks/{id}', function ($id, Request $request) {
-    $data = $request->validate([
-        'title' => 'required|max:255',
-        'description' => 'required',
-        'long_description' => 'nullable',
-    ]);
+// Criar uma nova task
+Route::post('/tasks', function (TaskRequest $request) {
+    $data = $request->validated();
+    $task = Task::create($data);
 
-    $task = Task::findOrFail($id);
+    return redirect()->route('tasks.show', $task->id)
+        ->with('success', 'Task created successfully!');
+})->name('tasks.store');
 
-    // aplica os dados validados
-    $task->title = $data['title'];
-    $task->description = $data['description'];
-    $task->long_description = $data['long_description'] ?? null;
-
-    // se quiser resetar o completed sempre
+// Atualizar uma task existente
+Route::put('/tasks/{task}', function (Task $task, TaskRequest $request) {
+    $data = $request->validated();
+    $task->update($data);
     $task->completed = false;
-
     $task->save();
 
     return redirect()->route('tasks.show', $task->id)
         ->with('success', 'Task updated successfully!');
 })->name('tasks.update');
 
+// Deletar uma task
+Route::delete('/tasks/{task}', function (Task $task) {
+    $task->delete();
+    return redirect()->route('tasks.index')
+        ->with('success', 'Task deleted successfully!');
+})->name('tasks.destroy');
+
+// Rotas extras de exemplo
 Route::get('/hello', fn() => 'Hello')->name('hello');
 Route::get('/hallo', fn() => redirect()->route('hello'));
 Route::get('/greet/{name}', fn($name) => "Hello, $name!");
-
 Route::fallback(fn() => 'Still got somewhere!');
